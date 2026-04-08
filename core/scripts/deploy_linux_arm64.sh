@@ -4,6 +4,13 @@ set -ex
 
 echo "running deploy_linux_arm64.sh"
 
+KERNEL_ARCH="arm64"
+CROSS_COMPILE_PREFIX="aarch64-linux-gnu-"
+EXTRA_HOSTCFLAGS=""
+if [ ! -f "/usr/include/dwarf.h" ] && [ -f "/usr/include/libdwarf/dwarf.h" ]; then
+  EXTRA_HOSTCFLAGS="-I/usr/include/libdwarf"
+fi
+
 function clean_and_jump() {
   git stash --all
   git checkout -f $COMMIT
@@ -127,6 +134,6 @@ do
   config_enable $key
 done
 
-make olddefconfig CC=$COMPILER
-make -j$N_CORES CC=$COMPILER > make.log 2>&1 || copy_log_then_exit make.log
+make ARCH=$KERNEL_ARCH CROSS_COMPILE=$CROSS_COMPILE_PREFIX HOSTCFLAGS="$EXTRA_HOSTCFLAGS" olddefconfig > olddefconfig.log 2>&1 || copy_log_then_exit olddefconfig.log
+make ARCH=$KERNEL_ARCH CROSS_COMPILE=$CROSS_COMPILE_PREFIX HOSTCFLAGS="$EXTRA_HOSTCFLAGS" -j$N_CORES > make.log 2>&1 || copy_log_then_exit make.log
 exit 0

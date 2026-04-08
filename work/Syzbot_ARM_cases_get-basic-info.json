@@ -1,0 +1,33 @@
+{
+  "0391d34e801643e2809b": {
+    "commit": "8f5ae30d69d7543eee0d70083daf4de8fe15d585",
+    "syzkaller": "807a3b61ca22f8988561c180eb47268ea6e244db",
+    "config": "https://syzkaller.appspot.com//text?tag=KernelConfig&x=8c5ac3d8b8abfcb",
+    "syz_repro": "https://syzkaller.appspot.com//text?tag=ReproSyz&x=17161662580000",
+    "log": "https://syzkaller.appspot.com//text?tag=CrashLog&x=144aca42580000",
+    "c_repro": "https://syzkaller.appspot.com//text?tag=ReproC&x=124aca42580000",
+    "time": "2025/09/02 11:39",
+    "manager": "ci-upstream-gce-arm64",
+    "report": "https://syzkaller.appspot.com//text?tag=CrashReport&x=14655e34580000",
+    "vul_offset": null,
+    "obj_size": null,
+    "host_url": "https://syzkaller.appspot.com/bug?extid=0391d34e801643e2809b",
+    "title": "\nKASAN: slab-use-after-free Read in xfs_buf_rele (4)\nxfs\n"
+  },
+  "14b6d57fb728e27ce23c": {
+    "commit": "8f5ae30d69d7543eee0d70083daf4de8fe15d585",
+    "syzkaller": "c06e8995d711b5a8d8fbd771826fcbfdac6f110f",
+    "config": "https://syzkaller.appspot.com//text?tag=KernelConfig&x=8c5ac3d8b8abfcb",
+    "syz_repro": "https://syzkaller.appspot.com//text?tag=ReproSyz&x=1428caf0580000",
+    "log": "https://syzkaller.appspot.com//text?tag=CrashLog&x=15494c34580000",
+    "c_repro": "https://syzkaller.appspot.com//text?tag=ReproC&x=11da19a2580000",
+    "time": "2025/08/12 16:30",
+    "manager": "ci-upstream-gce-arm64",
+    "report": "https://syzkaller.appspot.com//text?tag=CrashReport&x=1326c5a2580000",
+    "vul_offset": null,
+    "obj_size": null,
+    "host_url": "https://syzkaller.appspot.com/bug?extid=14b6d57fb728e27ce23c",
+    "title": "\nKASAN: slab-use-after-free Read in l2cap_unregister_user\nbluetooth\n",
+    "patch": "https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=752a6c9596dd25efd6978a73ff21f3b592668f4a"
+  }
+}

@@ -802,13 +802,17 @@ def reproduce_with_ori_poc(index):
         config = case["config"]
         c_repro = case["c_repro"]
         i386 = None
+        arch = "amd64"
+        if utilities.regx_match(r'arm64|aarch64', case["manager"]):
+            arch = "arm64"
         if utilities.regx_match(r'386', case["manager"]):
             i386 = True
+            arch = "386"
         log = case["log"]
         logger.info("Running case: {}".format(hash))
         offset = index
         gcc = utilities.set_gcc_version(time_parser.parse(case["time"]))
-        checker = CrashChecker(project_path, case_path, default_port, logger, args.debug, offset, 4, gcc=gcc)
+        checker = CrashChecker(project_path, case_path, default_port, logger, args.debug, offset, 4, arch=arch, gcc=gcc)
         if checker.deploy_linux(commit,config,0) == 1:
             print("Thread {}: running case {}: Error occur in deploy_linux.sh".format(index, hash[:7]))
             continue
@@ -870,13 +874,17 @@ def reproduce_one_case(index):
         config = case["config"]
         c_repro = case["c_repro"]
         i386 = None
+        arch = "amd64"
+        if utilities.regx_match(r'arm64|aarch64', case["manager"]):
+            arch = "arm64"
         if utilities.regx_match(r'386', case["manager"]):
             i386 = True
+            arch = "386"
         log = case["log"]
         logger.info("Running case: {}".format(hash))
         offset = index
         gcc = utilities.set_gcc_version(time_parser.parse(case["time"]))
-        checker = CrashChecker(project_path, case_path, default_port, logger, args.debug, offset, 4, gcc=gcc)
+        checker = CrashChecker(project_path, case_path, default_port, logger, args.debug, offset, 4, arch=arch, gcc=gcc)
         checker.case_logger.info("=============================A reproducing process starts=============================")
         if args.identify_by_trace:
             if args.reproduce:

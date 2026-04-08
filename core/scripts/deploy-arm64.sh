@@ -4,6 +4,13 @@ set -ex
 
 echo "running deploy-arm64.sh"
 
+KERNEL_ARCH="arm64"
+CROSS_COMPILE_PREFIX="aarch64-linux-gnu-"
+EXTRA_HOSTCFLAGS=""
+if [ ! -f "/usr/include/dwarf.h" ] && [ -f "/usr/include/libdwarf/dwarf.h" ]; then
+  EXTRA_HOSTCFLAGS="-I/usr/include/libdwarf"
+fi
+
 LATEST="9b1f3e6"
 
 function config_disable() {
@@ -51,6 +58,26 @@ function build_golang() {
   rm go1.23.2.linux-amd64.tar.gz
 }
 
+function check_arm64_toolchain() {
+  local missing=0
+  local bins=(
+    "aarch64-linux-gnu-gcc"
+    "aarch64-linux-gnu-objdump"
+    "aarch64-linux-gnu-ld"
+  )
+  for b in "${bins[@]}"; do
+    if ! command -v "$b" >/dev/null 2>&1; then
+      echo "[!] Missing required tool: $b"
+      missing=1
+    fi
+  done
+  if [ "$missing" -ne 0 ]; then
+    echo "[!] Arm64 syzkaller target build requires cross toolchain."
+    echo "[!] Install on Ubuntu/Debian: sudo apt-get install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu"
+    exit 1
+  fi
+}
+
 if [ $# -ne 13 ]; then
   echo "Usage ./deploy-arm64.sh linux_clone_path case_hash linux_commit syzkaller_commit linux_config testcase index catalog image arch gcc_version max_compiling_kernel save_linux_folder"
   exit 1
@@ -93,6 +120,7 @@ fi
 cd ..
 
 export GO111MODULE=auto
+export GOTOOLCHAIN=local
 export GOPATH=$CASE_PATH/gopath
 export GOROOT=$PROJECT_PATH/tools/goroot
 export LLVM_BIN=$PROJECT_PATH/tools/llvm/build/bin
@@ -115,6 +143,7 @@ fi
 
 echo "[+] Building syzkaller"
 if [ ! -f "$CASE_PATH/.stamp/BUILD_SYZKALLER" ]; then
+  check_arm64_toolchain
   if [ -d "$GOPATH/src/github.com/google/syzkaller" ]; then
     rm -rf $GOPATH/src/github.com/google/syzkaller
   fi
@@ -122,12 +151,12 @@ if [ ! -f "$CASE_PATH/.stamp/BUILD_SYZKALLER" ]; then
   cd $GOPATH/src/github.com/google/
   cp -r $PROJECT_PATH/tools/gopath/src/github.com/google/syzkaller ./
   cd $GOPATH/src/github.com/google/syzkaller || exit 1
-  make clean
   git stash --all || set_git_config
   git checkout -f 9b1f3e665308ee2ddd5b3f35a078219b5c509cdb
+  make clean > syzkaller_clean.log 2>&1 || true
   patch -p1 -i $PATCHES_PATH/syzkaller-9b1f3e6-ditto.patch
 
-  make TARGETARCH=$ARCH TARGETVMARCH=arm64
+  make TARGETARCH=$ARCH TARGETVMARCH=arm64 > syzkaller_make.log 2>&1 || copy_log_then_exit syzkaller_make.log
   if [ ! -d "workdir" ]; then
     mkdir workdir
   fi
@@ -201,8 +230,8 @@ if [ ! -f "$CASE_PATH/.stamp/BUILD_KERNEL" ]; then
     config_enable $key
   done
 
-  make olddefconfig CC=$COMPILER
-  make -j$N_CORES CC=$COMPILER > make.log 2>&1 || copy_log_then_exit make.log
+  make ARCH=$KERNEL_ARCH CROSS_COMPILE=$CROSS_COMPILE_PREFIX HOSTCFLAGS="$EXTRA_HOSTCFLAGS" olddefconfig > olddefconfig.log 2>&1 || copy_log_then_exit olddefconfig.log
+  make ARCH=$KERNEL_ARCH CROSS_COMPILE=$CROSS_COMPILE_PREFIX HOSTCFLAGS="$EXTRA_HOSTCFLAGS" -j$N_CORES > make.log 2>&1 || copy_log_then_exit make.log
   rm $CASE_PATH/config || echo "It's ok"
   cp .config $CASE_PATH/config
   touch $CASE_PATH/.stamp/BUILD_KERNEL

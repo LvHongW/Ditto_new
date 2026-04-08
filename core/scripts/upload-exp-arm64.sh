@@ -23,10 +23,31 @@ PROJECT_PATH=`pwd`
 BIN_PATH=$CASE_PATH/gopath/src/github.com/google/syzkaller
 GCC=`pwd`/tools/$GCCVERSION/bin/gcc
 export GO111MODULE=auto
+export GOTOOLCHAIN=local
 export GOROOT=`pwd`/tools/goroot
 export PATH=$GOROOT/bin:$PATH
 
 ARCH="arm64"
+
+function check_arm64_toolchain() {
+    local missing=0
+    local bins=(
+        "aarch64-linux-gnu-gcc"
+        "aarch64-linux-gnu-objdump"
+        "aarch64-linux-gnu-ld"
+    )
+    for b in "${bins[@]}"; do
+        if ! command -v "$b" >/dev/null 2>&1; then
+            echo "[!] Missing required tool: $b"
+            missing=1
+        fi
+    done
+    if [ "$missing" -ne 0 ]; then
+        echo "[!] Arm64 syzkaller executor build requires cross toolchain."
+        echo "[!] Install on Ubuntu/Debian: sudo apt-get install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu"
+        exit 1
+    fi
+}
 
 cd $CASE_PATH
 if [ ! -d "$CASE_PATH/poc" ]; then
@@ -45,6 +66,7 @@ scp -F /dev/null -o UserKnownHostsFile=/dev/null \
     -i $IMAGE_PATH/stretch.img.key -P $PORT ./testcase root@localhost:/root
 
 if [ "$FIXED" == "0" ]; then
+    check_arm64_toolchain
     if [ ! -d "$CASE_PATH/poc/gopath" ]; then
         mkdir -p $CASE_PATH/poc/gopath
     fi

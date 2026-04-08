@@ -93,6 +93,7 @@ fi
 cd ..
 
 export GO111MODULE=auto
+export GOTOOLCHAIN=local
 export GOPATH=$CASE_PATH/gopath
 export GOROOT=$PROJECT_PATH/tools/goroot
 export LLVM_BIN=$PROJECT_PATH/tools/llvm/build/bin
@@ -122,9 +123,9 @@ if [ ! -f "$CASE_PATH/.stamp/BUILD_SYZKALLER" ]; then
   cd $GOPATH/src/github.com/google/
   cp -r $PROJECT_PATH/tools/gopath/src/github.com/google/syzkaller ./
   cd $GOPATH/src/github.com/google/syzkaller || exit 1
-  make clean
   git stash --all || set_git_config
   git checkout -f 9b1f3e665308ee2ddd5b3f35a078219b5c509cdb
+  make clean > syzkaller_clean.log 2>&1 || true
   patch -p1 -i $PATCHES_PATH/syzkaller-9b1f3e6-ditto.patch
 
   make TARGETARCH=$ARCH TARGETVMARCH=amd64
