@@ -45,7 +45,7 @@ progressbar2==3.53.1
 protobuf==3.14.0
 psutil==5.8.0
 ptyprocess==0.7.0
-pwntools==4.2.2
+pwntools==4.9.0
 pycparser==2.20
 pyelftools==0.27
 Pygments==2.7.4

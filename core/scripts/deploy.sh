@@ -94,6 +94,8 @@ cd ..
 
 export GO111MODULE=auto
 export GOTOOLCHAIN=local
+unset GOBIN
+export GOBIN=
 export GOPATH=$CASE_PATH/gopath
 export GOROOT=$PROJECT_PATH/tools/goroot
 export LLVM_BIN=$PROJECT_PATH/tools/llvm/build/bin

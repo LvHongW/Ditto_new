@@ -97,6 +97,10 @@ if [ "$FIXED" == "0" ]; then
             fi
             sleep 10
         done
+        if [ ! -f "$GOPATH/src/github.com/google/syzkaller/MAKE_COMPLETED" ]; then
+            echo "[!] Time out waiting for syzkaller compilation to finish, or previous build aborted"
+            exit 1
+        fi
     fi
 else
     cd $CASE_PATH/gopath/src/github.com/google/syzkaller

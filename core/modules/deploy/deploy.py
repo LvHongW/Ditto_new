@@ -17,7 +17,7 @@ from .worker import Workers
 
 syz_config_template="""
 {{ 
-        "target": "linux/amd64/{8}",
+    "target": "linux/{8}",
         "http": "0.0.0.0:{5}",
         "workdir": "{0}/workdir",
         "kernel_obj": "{1}",
@@ -43,7 +43,7 @@ syz_config_template="""
         ],
         "vm": {{
                 "count": {9},
-                "kernel": "{1}/arch/x86/boot/bzImage",
+            "kernel": "{19}",
                 "cpu": 2,
                 "mem": 2048
         }},
@@ -225,6 +225,13 @@ class Deployer(Workers):
     def run_syzkaller(self, hash_val, MaintainPoC):
         self.logger.info("run syzkaller".format(self.index))
         syzkaller = os.path.join(self.syzkaller_path, "bin/syz-manager")
+        runtime_tmp = os.path.join(self.current_case_path, ".tmp")
+        os.makedirs(runtime_tmp, exist_ok=True)
+        runtime_env = os.environ.copy()
+        runtime_env["TMPDIR"] = runtime_tmp
+        runtime_env["TMP"] = runtime_tmp
+        runtime_env["TEMP"] = runtime_tmp
+        self.logger.info("syzkaller TMPDIR: {}".format(runtime_tmp))
         exitcode = 4
 
         for _ in range(0, 3):
@@ -234,6 +241,7 @@ class Deployer(Workers):
                             "-debug", 
                             "-poc",
                             ],
+                    env=runtime_env,
                     stdout=PIPE,
                     stderr=STDOUT
                     )
@@ -245,6 +253,7 @@ class Deployer(Workers):
                                    "--config={}/workdir/{}.cfg".format(self.syzkaller_path, hash_val[:7]), 
                                    "-debug",
                                    ],
+                            env=runtime_env,
                             stdout=PIPE,
                             stderr=STDOUT
                             )
@@ -256,6 +265,7 @@ class Deployer(Workers):
                             "--config={}/workdir/{}-poc.cfg".format(self.syzkaller_path, hash_val[:7]), 
                             "-poc",
                             ],
+                    env=runtime_env,
                     stdout=PIPE,
                     stderr=STDOUT
                     )
@@ -266,6 +276,7 @@ class Deployer(Workers):
                     p = Popen([syzkaller, 
                                    "--config={}/workdir/{}.cfg".format(self.syzkaller_path, hash_val[:7]),
                                    ],
+                            env=runtime_env,
                             stdout=PIPE,
                             stderr=STDOUT
                             )
@@ -474,8 +485,11 @@ class Deployer(Workers):
         if self.arch == "arm64":
             arm_image = "{}-arm64".format(image)
             arm_image_path = os.path.join(self.project_path, "tools", "img", "{}.img".format(arm_image))
-            if os.path.exists(arm_image_path):
-                image = arm_image
+            if not os.path.exists(arm_image_path):
+                self.logger.error("Missing arm64 disk image: {}".format(arm_image_path))
+                self.logger.error("Please prepare tools/img/{}.img and tools/img/{}.img.key".format(arm_image, arm_image))
+                return 1
+            image = arm_image
         script_name = "deploy.sh"
         if self.arch == "arm64":
             script_name = "deploy-arm64.sh"
@@ -530,7 +544,14 @@ class Deployer(Workers):
         email_addrs = "\"" + "\",\n\t\"".join(email_addrs_list) + "\""
     
         syzkaller_path = self.syzkaller_path
-        self.grebe_struct = "\" \""
+        grebe_struct_path = os.path.join(self.basic_info_folder, "grebe_struct")
+        if not os.path.exists(grebe_struct_path):
+            # Keep an empty optional file to avoid manager startup noise.
+            open(grebe_struct_path, "w").close()
+        self.grebe_struct = "\"{}\"".format(grebe_struct_path)
+        kernel_image = "{}/arch/x86/boot/bzImage".format(self.kernel_path)
+        if self.arch == "arm64":
+            kernel_image = "{}/arch/arm64/boot/Image".format(self.kernel_path)
         syz_config = syz_config_template.format(syzkaller_path, 
                                                 self.kernel_path, 
                                                 self.image_path, 
@@ -549,7 +570,8 @@ class Deployer(Workers):
                                                 en_critical_syscalls,
                                                 en_critical_sys_seqs,
                                                 self.calltracesim,
-                                                self.reprosim)
+                                                self.reprosim,
+                                                kernel_image)
         f = open(os.path.join(syzkaller_path, "workdir/{}-poc.cfg".format(hash_val)), "w")
         f.writelines(syz_config)
         f.close()
@@ -583,7 +605,8 @@ class Deployer(Workers):
                                                 en_critical_syscalls,
                                                 en_critical_sys_seqs,
                                                 self.calltracesim,
-                                                self.reprosim)
+                                                self.reprosim,
+                                                kernel_image)
         f = open(os.path.join(syzkaller_path, "workdir/{}.cfg".format(hash_val)), "w")
         f.writelines(syz_config)
         f.close()

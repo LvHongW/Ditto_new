@@ -35,6 +35,7 @@ class VMInstance:
                         "kvm-intel.vpid=1", "kvm-intel.emulate_invalid_guest_state=1", \
                         "kvm-intel.eptad=1", "kvm-intel.enable_shadow_vmcs=1", "kvm-intel.pml=1", \
                         "kvm-intel.enable_apicv=1"]
+        self.arm64_opts = ["kasan_multi_shot=1", "earlyprintk=serial", "oops=panic", "panic=1", "net.ifnames=0"]
         log_name += log_suffix
         self.qemu_logger = self.init_logger(os.path.join(proj_path, log_name))
         self.case_logger = self.qemu_logger
@@ -76,7 +77,7 @@ class VMInstance:
             self.cmd_launch.extend(["-monitor", "tcp::{},server,nowait,nodelay".format(mon_port)])
         if self.port != None:
             if arch == "arm64":
-                self.cmd_launch.extend(["-netdev", "user,id=net0,hostfwd=tcp::{}-:22".format(self.port), "-device", "virtio-net-device,netdev=net0"])
+                self.cmd_launch.extend(["-netdev", "user,id=net0,hostfwd=tcp::{}-:22".format(self.port), "-device", "virtio-net-device,netdev=net0", "-object", "rng-random,filename=/dev/urandom,id=rng0", "-device", "virtio-rng-device,rng=rng0"])
             else:
                 self.cmd_launch.extend(["-net", "nic,model=e1000", "-net", "user,host=10.0.2.10,hostfwd=tcp::{}-:22".format(self.port)])
         if arch == "arm64":
@@ -91,7 +92,10 @@ class VMInstance:
                         "-snapshot", "-kernel", "{}/arch/x86_64/boot/bzImage".format(self.linux),
                         "-append"])
         if opts == None:
-            cur_opts.extend(self.def_opts)
+            if arch == "arm64":
+                cur_opts.extend(self.arm64_opts)
+            else:
+                cur_opts.extend(self.def_opts)
         else:
             cur_opts.extend(opts)
         if type(cur_opts) == list:
@@ -167,7 +171,12 @@ class VMInstance:
                     continue
                 if utilities.regx_match(reboot_regx, line) or utilities.regx_match(port_error_regx, line):
                     self.case_logger.error("Booting qemu-{} failed".format(self.log_name))
-                if utilities.regx_match(r'Debian GNU\/Linux \d+ syzkaller ttyS\d+', line):
+                # ARM64 images may fail ttyAMA getty but still fully boot and start sshd.
+                if (
+                    utilities.regx_match(r'Debian GNU\/Linux \d+ syzkaller tty(S|AMA)\d+', line)
+                    or utilities.regx_match(r'Started OpenBSD Secure Shell server\.', line)
+                    or utilities.regx_match(r'Reached target Multi-User System\.', line)
+                ):
                     self.qemu_ready = True
                 self.qemu_logger.info(line)
                 if self.debug:

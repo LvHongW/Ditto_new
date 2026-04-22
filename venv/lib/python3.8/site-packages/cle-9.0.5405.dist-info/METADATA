@@ -1,0 +1,23 @@
+Metadata-Version: 2.1
+Name: cle
+Version: 9.0.5405
+Summary: CLE Loads Everything (at least, many binary formats!) and provides a pythonic interface to analyze what they are and what they would look like in memory.
+Home-page: UNKNOWN
+License: UNKNOWN
+Platform: UNKNOWN
+Requires-Python: >=3.6
+Requires-Dist: pyelftools (>=0.25)
+Requires-Dist: cffi
+Requires-Dist: pyvex (==9.0.5405)
+Requires-Dist: pefile
+Requires-Dist: sortedcontainers (>=2.0)
+Provides-Extra: ar
+Requires-Dist: arpy (==1.1.1) ; extra == 'ar'
+Provides-Extra: minidump
+Requires-Dist: minidump (>=0.0.10) ; extra == 'minidump'
+Provides-Extra: xbe
+Requires-Dist: pyxbe (==0.0.2) ; extra == 'xbe'
+
+UNKNOWN
+
+

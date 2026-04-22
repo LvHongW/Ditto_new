@@ -1,0 +1,9 @@
+# 忽略整个tools文件夹
+tools/
+
+# 忽略整个work文件夹
+work/
+
+# 如果需要忽略特定类型的文件，可以这样
+# tools/*.log
+# work/temp/

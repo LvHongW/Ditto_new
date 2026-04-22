@@ -32,7 +32,7 @@ NONCRASH = 0
 CONFIRM = 1
 SUSPICIOUS = 2
 thread_fn = None
-qemu_timeout = 6
+qemu_timeout = 30 # increased to avoid qemu timeouts when booting AArch64 tests
 
 class CrashChecker:
     def __init__(self, project_path, case_path, ssh_port, logger, debug, offset, qemu_num, arch="amd64", store_read=True, compiler="gcc-7", max_compiling_kernel=1):
@@ -379,7 +379,7 @@ class CrashChecker:
     def trigger_ori_crash(self, syz_repro, syz_commit, c_repro, i386, th_index,c_hash,repro_type,fixed=0):
         res = []
         trgger_hunted_bug = False
-        qemu = VM(hash_tag=c_hash, linux=self.linux_path, port=self.ssh_port+th_index, image=self.image_path, arch=self.arch, proj_path="{}/poc/".format(self.case_path) ,log_name="qemu-{}.log".format(c_hash), log_suffix=str(th_index), timeout=10*qemu_timeout, debug=self.debug)
+        qemu = VM(hash_tag=c_hash, linux=self.linux_path, port=self.ssh_port+th_index, image=self.image_path, arch=self.arch, proj_path="{}/poc/".format(self.case_path) ,log_name="qemu-{}.log".format(c_hash), log_suffix=str(th_index), timeout=60*qemu_timeout, debug=self.debug)
         qemu.qemu_logger.info("QEMU-{} launched. Fixed={}\n".format(th_index, fixed))
         p = qemu.run()
         self.case_logger.info("QEMU-{} start running...".format(th_index))
@@ -456,8 +456,13 @@ class CrashChecker:
             self.case_logger.error("Exception occur when reporducing crash: {}".format(c_hash[:7]))
             if p.poll() == None:
                 p.kill()
+        
         if not extract_report:
-            res = ['QEMU threaded {}: Error occur at booting qemu'.format(th_index)]
+            if not qemu.qemu_ready:
+                err_msg = 'QEMU threaded {}: Timeout or error occurred before QEMU became ready'.format(th_index)
+            else:
+                err_msg = 'QEMU threaded {}: Failed to execute reproduce script or timeout without a crash report'.format(th_index)
+            res = [err_msg]
             if p.poll() == None:
                 p.kill()
         self.queue.put([res, trgger_hunted_bug])
