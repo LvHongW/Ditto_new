@@ -16,7 +16,7 @@ from dateutil import parser as time_parser
 from .worker import Workers
 
 syz_config_template="""
-{{ 
+{{
     "target": "linux/{8}",
         "http": "0.0.0.0:{5}",
         "workdir": "{0}/workdir",
@@ -45,7 +45,9 @@ syz_config_template="""
                 "count": {9},
             "kernel": "{19}",
                 "cpu": 2,
-                "mem": 2048
+                "mem": 2048,
+                "image_device": "{20}",
+                "cmdline": "{21}"
         }},
         "enable_syscalls": [
             {3}
@@ -550,8 +552,12 @@ class Deployer(Workers):
             open(grebe_struct_path, "w").close()
         self.grebe_struct = "\"{}\"".format(grebe_struct_path)
         kernel_image = "{}/arch/x86/boot/bzImage".format(self.kernel_path)
+        image_device = "hda"
+        cmdline = "root=/dev/sda console=ttyS0 kasan_multi_shot=1 earlyprintk=serial oops=panic nmi_watchdog=panic panic=1 ftrace_dump_on_oops=orig_cpu rodata=n vsyscall=native net.ifnames=0 biosdevname=0"
         if self.arch == "arm64":
             kernel_image = "{}/arch/arm64/boot/Image".format(self.kernel_path)
+            image_device = "drive if=none,file=,format=raw,id=hd0 -device virtio-blk-device,drive=hd0"
+            cmdline = "root=/dev/vda console=ttyAMA0 kasan_multi_shot=1 earlyprintk=serial oops=panic panic=1 net.ifnames=0"
         syz_config = syz_config_template.format(syzkaller_path, 
                                                 self.kernel_path, 
                                                 self.image_path, 
@@ -571,7 +577,9 @@ class Deployer(Workers):
                                                 en_critical_sys_seqs,
                                                 self.calltracesim,
                                                 self.reprosim,
-                                                kernel_image)
+                                                kernel_image,
+                                                image_device,
+                                                cmdline)
         f = open(os.path.join(syzkaller_path, "workdir/{}-poc.cfg".format(hash_val)), "w")
         f.writelines(syz_config)
         f.close()
@@ -606,7 +614,9 @@ class Deployer(Workers):
                                                 en_critical_sys_seqs,
                                                 self.calltracesim,
                                                 self.reprosim,
-                                                kernel_image)
+                                                kernel_image,
+                                                image_device,
+                                                cmdline)
         f = open(os.path.join(syzkaller_path, "workdir/{}.cfg".format(hash_val)), "w")
         f.writelines(syz_config)
         f.close()
