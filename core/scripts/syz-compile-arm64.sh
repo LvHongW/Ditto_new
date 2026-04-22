@@ -8,11 +8,21 @@ fi
 CASE_PATH=$1
 SYZ_PATH=$CASE_PATH/gopath/src/github.com/google/syzkaller
 ARCH=$2
+PROJECT_PATH=`pwd`
 
 export GO111MODULE=auto
+export GOTOOLCHAIN=local
+unset GOBIN
+export GOBIN=
 export GOPATH=$CASE_PATH/gopath
-export GOROOT=`pwd`/tools/goroot
-export LLVM_BIN=`pwd`/tools/llvm/build/bin
+export GOROOT=$PROJECT_PATH/tools/goroot
+export LLVM_BIN=$PROJECT_PATH/tools/llvm/build/bin
+export TMPDIR=$CASE_PATH/.tmp
+export TMP=$TMPDIR
+export TEMP=$TMPDIR
+export GOTMPDIR=$TMPDIR
+export GOCACHE=$CASE_PATH/.gocache
+mkdir -p "$TMPDIR" "$GOCACHE"
 export PATH=$GOROOT/bin:$LLVM_BIN:$PATH
 
 cd $SYZ_PATH

@@ -11,16 +11,7 @@ if [ ! -f "/usr/include/dwarf.h" ] && [ -f "/usr/include/libdwarf/dwarf.h" ]; th
   EXTRA_HOSTCFLAGS="-I/usr/include/libdwarf"
 fi
 
-function clean_and_jump() {
-  git stash --all
-  git checkout -f $COMMIT
-}
-
-function copy_log_then_exit() {
-  LOG=$1
-  cp $LOG $CASE_PATH/$LOG-deploy_linux
-  exit 1
-}
+ARM64_TOOLCHAIN_BIN=""
 
 function config_disable() {
   key=$1
@@ -36,6 +27,70 @@ function config_enable() {
   sed -i "s/# $key is not set/$key=y/g" .config
 }
 
+function pick_arm64_toolchain() {
+  local tag="$1"
+  case "$tag" in
+    gcc12)
+      ARM64_TOOLCHAIN_BIN="$PROJECT_PATH/tools/aarch64-gcc-12.3/bin"
+      CROSS_COMPILE_PREFIX="aarch64-none-linux-gnu-"
+      ;;
+    gcc11)
+      ARM64_TOOLCHAIN_BIN="$PROJECT_PATH/tools/aarch64-gcc-11.3/bin"
+      CROSS_COMPILE_PREFIX="aarch64-none-linux-gnu-"
+      ;;
+    gcc10)
+      ARM64_TOOLCHAIN_BIN="$PROJECT_PATH/tools/aarch64-gcc-10.3/bin"
+      CROSS_COMPILE_PREFIX="aarch64-none-linux-gnu-"
+      ;;
+    gcc7)
+      ARM64_TOOLCHAIN_BIN="$PROJECT_PATH/tools/linaro-gcc-7.5/bin"
+      CROSS_COMPILE_PREFIX="aarch64-linux-gnu-"
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+
+  if [ -x "$ARM64_TOOLCHAIN_BIN/${CROSS_COMPILE_PREFIX}gcc" ] && \
+     [ -x "$ARM64_TOOLCHAIN_BIN/${CROSS_COMPILE_PREFIX}ld" ]; then
+    export PATH="$ARM64_TOOLCHAIN_BIN:$PATH"
+    echo "[+] Using arm64 toolchain: $tag ($ARM64_TOOLCHAIN_BIN, prefix=$CROSS_COMPILE_PREFIX)"
+    return 0
+  fi
+
+  return 1
+}
+
+function select_arm64_toolchain() {
+  # Try bundled toolchains first, then fall back to system.
+  pick_arm64_toolchain gcc10 || pick_arm64_toolchain gcc11 || pick_arm64_toolchain gcc12 || pick_arm64_toolchain gcc7 || true
+
+  if [ -z "$ARM64_TOOLCHAIN_BIN" ]; then
+    if command -v aarch64-linux-gnu-gcc >/dev/null 2>&1; then
+      CROSS_COMPILE_PREFIX="aarch64-linux-gnu-"
+      echo "[+] Using system toolchain prefix: $CROSS_COMPILE_PREFIX"
+    elif command -v aarch64-none-linux-gnu-gcc >/dev/null 2>&1; then
+      CROSS_COMPILE_PREFIX="aarch64-none-linux-gnu-"
+      echo "[+] Using system toolchain prefix: $CROSS_COMPILE_PREFIX"
+    else
+      echo "[!] No arm64 cross toolchain found"
+      return 1
+    fi
+  fi
+  return 0
+}
+
+function clean_and_jump() {
+  git stash --all
+  git checkout -f $COMMIT
+}
+
+function copy_log_then_exit() {
+  LOG=$1
+  cp $LOG $CASE_PATH/$LOG-deploy_linux
+  exit 1
+}
+
 if [ $# -ne 5 ] && [ $# -ne 8 ]; then
   echo "Usage ./deploy_linux_arm64.sh gcc_version fixed linux_path package_path max_compiling_kernel [linux_commit, config_url, mode]"
   exit 1
@@ -44,11 +99,11 @@ fi
 COMPILER_VERSION=$1
 FIXED=$2
 LINUX=$3
+PROJECT_PATH=$4
 MAX_COMPILING_KERNEL=$5
 N_CORES=$((`nproc` / $MAX_COMPILING_KERNEL))
-echo "Compiler: "$COMPILER_VERSION | grep gcc && \
-COMPILER=$4/tools/$COMPILER_VERSION/bin/gcc || \
-COMPILER=$4/tools/$COMPILER_VERSION/bin/clang
+
+select_arm64_toolchain
 
 if [ $# -eq 8 ]; then
   COMMIT=$6

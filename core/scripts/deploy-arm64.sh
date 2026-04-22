@@ -334,6 +334,8 @@ select_arm64_toolchain_from_case_config
 check_arm64_toolchain
 
 export GO111MODULE=auto
+unset GOBIN
+export GOBIN=
 export GOTOOLCHAIN=local
 export GOPATH=$CASE_PATH/gopath
 export GOROOT=$PROJECT_PATH/tools/goroot
