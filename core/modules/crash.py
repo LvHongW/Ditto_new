@@ -380,6 +380,7 @@ class CrashChecker:
         res = []
         trgger_hunted_bug = False
         qemu = VM(hash_tag=c_hash, linux=self.linux_path, port=self.ssh_port+th_index, image=self.image_path, arch=self.arch, proj_path="{}/poc/".format(self.case_path) ,log_name="qemu-{}.log".format(c_hash), log_suffix=str(th_index), timeout=60*qemu_timeout, debug=self.debug)
+        self.case_logger.info("[DEBUG] QEMU-{} arch={}, port={}, linux={}, image={}".format(th_index, self.arch, self.ssh_port+th_index, self.linux_path, self.image_path))
         qemu.qemu_logger.info("QEMU-{} launched. Fixed={}\n".format(th_index, fixed))
         p = qemu.run()
         self.case_logger.info("QEMU-{} start running...".format(th_index))

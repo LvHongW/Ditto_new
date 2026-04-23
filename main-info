@@ -148,3 +148,8 @@
 2026-04-22 17:55:39,285 INFO Thread 0 exit->
 2026-04-22 18:15:45,996 INFO case:0391d34 deploy start...
 2026-04-22 18:15:45,997 INFO Thread 0: run case 0391d34e801643e2809b [0/1] left
+2026-04-22 18:17:40,879 INFO case:0391d34 deploy start...
+2026-04-22 18:17:40,879 INFO Thread 0: run case 0391d34e801643e2809b [0/1] left
+2026-04-22 19:04:47,074 INFO case:0391d34 deploy done!
+2026-04-22 19:04:55,079 INFO case queue is empty!
+2026-04-22 19:04:55,080 INFO Thread 0 exit->

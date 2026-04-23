@@ -47,7 +47,8 @@ syz_config_template="""
                 "cpu": 2,
                 "mem": 2048,
                 "image_device": "{20}",
-                "cmdline": "{21}"
+                "cmdline": "{21}",
+                "qemu_args": "{22}"
         }},
         "enable_syscalls": [
             {3}
@@ -233,6 +234,8 @@ class Deployer(Workers):
         runtime_env["TMPDIR"] = runtime_tmp
         runtime_env["TMP"] = runtime_tmp
         runtime_env["TEMP"] = runtime_tmp
+        runtime_env["GOTOOLCHAIN"] = "local"
+        runtime_env["GOROOT"] = os.path.join(self.project_path, "tools", "goroot")
         self.logger.info("syzkaller TMPDIR: {}".format(runtime_tmp))
         exitcode = 4
 
@@ -554,10 +557,12 @@ class Deployer(Workers):
         kernel_image = "{}/arch/x86/boot/bzImage".format(self.kernel_path)
         image_device = "hda"
         cmdline = "root=/dev/sda console=ttyS0 kasan_multi_shot=1 earlyprintk=serial oops=panic nmi_watchdog=panic panic=1 ftrace_dump_on_oops=orig_cpu rodata=n vsyscall=native net.ifnames=0 biosdevname=0"
+        qemu_args = ""
         if self.arch == "arm64":
             kernel_image = "{}/arch/arm64/boot/Image".format(self.kernel_path)
-            image_device = "drive if=none,file=,format=raw,id=hd0 -device virtio-blk-device,drive=hd0"
-            cmdline = "root=/dev/vda console=ttyAMA0 kasan_multi_shot=1 earlyprintk=serial oops=panic panic=1 net.ifnames=0"
+            image_device = "drive if=none,file=,format=raw,id=hd0"
+            cmdline = "kasan_multi_shot=1 oops=panic panic=1 net.ifnames=0"
+            qemu_args = "-machine virt,virtualization=on -cpu cortex-a57 -device virtio-blk-device,drive=hd0"
         syz_config = syz_config_template.format(syzkaller_path, 
                                                 self.kernel_path, 
                                                 self.image_path, 
@@ -579,10 +584,12 @@ class Deployer(Workers):
                                                 self.reprosim,
                                                 kernel_image,
                                                 image_device,
-                                                cmdline)
+                                                cmdline,
+                                                qemu_args)
         f = open(os.path.join(syzkaller_path, "workdir/{}-poc.cfg".format(hash_val)), "w")
         f.writelines(syz_config)
         f.close()
+        self.logger.info("[DEBUG] syzkaller poc config: arch={}, image_device={}, cmdline={}, qemu_args={}".format(self.arch, image_device, cmdline, qemu_args))
 
         new_added_syscalls = []
         for i in range(0, min(2,len(syscalls))):
@@ -616,7 +623,8 @@ class Deployer(Workers):
                                                 self.reprosim,
                                                 kernel_image,
                                                 image_device,
-                                                cmdline)
+                                                cmdline,
+                                                qemu_args)
         f = open(os.path.join(syzkaller_path, "workdir/{}.cfg".format(hash_val)), "w")
         f.writelines(syz_config)
         f.close()
