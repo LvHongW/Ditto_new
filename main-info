@@ -153,3 +153,18 @@
 2026-04-22 19:04:47,074 INFO case:0391d34 deploy done!
 2026-04-22 19:04:55,079 INFO case queue is empty!
 2026-04-22 19:04:55,080 INFO Thread 0 exit->
+2026-04-24 11:22:35,385 INFO case:0391d34 deploy start...
+2026-04-24 11:22:35,393 INFO Thread 0: run case 0391d34e801643e2809b [0/1] left
+2026-04-24 13:21:43,765 INFO case:0391d34 deploy start...
+2026-04-24 13:21:43,766 INFO Thread 0: run case 0391d34e801643e2809b [0/1] left
+2026-04-24 13:21:45,536 INFO case:0391d34 deploy done!
+2026-04-24 13:23:49,878 INFO case:0391d34 deploy start...
+2026-04-24 13:23:49,878 INFO Thread 0: run case 0391d34e801643e2809b [0/1] left
+2026-04-24 13:25:55,612 INFO case:0391d34 deploy done!
+2026-04-24 13:27:12,367 INFO case:0391d34 deploy start...
+2026-04-24 13:27:12,368 INFO Thread 0: run case 0391d34e801643e2809b [0/1] left
+2026-04-24 14:14:33,984 INFO case:0391d34 deploy done!
+2026-04-24 14:14:41,989 INFO case queue is empty!
+2026-04-24 14:14:41,989 INFO Thread 0 exit->
+2026-04-28 11:30:09,153 INFO case:0391d34 deploy start...
+2026-04-28 11:30:09,169 INFO Thread 0: run case 0391d34e801643e2809b [0/1] left

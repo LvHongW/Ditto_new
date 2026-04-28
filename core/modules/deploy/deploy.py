@@ -560,9 +560,9 @@ class Deployer(Workers):
         qemu_args = ""
         if self.arch == "arm64":
             kernel_image = "{}/arch/arm64/boot/Image".format(self.kernel_path)
-            image_device = "drive if=none,file=,format=raw,id=hd0"
+            image_device = "drive if=none,format=raw,id=hd0,file="
             cmdline = "kasan_multi_shot=1 oops=panic panic=1 net.ifnames=0"
-            qemu_args = "-machine virt,virtualization=on -cpu cortex-a57 -device virtio-blk-device,drive=hd0"
+            qemu_args = "-machine virt,virtualization=on,gic-version=max -cpu max,sve128=on,pauth=off -device virtio-blk-device,drive=hd0"
         syz_config = syz_config_template.format(syzkaller_path, 
                                                 self.kernel_path, 
                                                 self.image_path, 
@@ -590,6 +590,11 @@ class Deployer(Workers):
         f.writelines(syz_config)
         f.close()
         self.logger.info("[DEBUG] syzkaller poc config: arch={}, image_device={}, cmdline={}, qemu_args={}".format(self.arch, image_device, cmdline, qemu_args))
+        # Log the full generated config for debugging
+        poc_cfg_path = os.path.join(syzkaller_path, "workdir/{}-poc.cfg".format(hash_val))
+        if os.path.exists(poc_cfg_path):
+            with open(poc_cfg_path, 'r') as cfg_f:
+                self.logger.info("[DEBUG] generated poc.cfg content:\n{}".format(cfg_f.read()))
 
         new_added_syscalls = []
         for i in range(0, min(2,len(syscalls))):
@@ -628,6 +633,11 @@ class Deployer(Workers):
         f = open(os.path.join(syzkaller_path, "workdir/{}.cfg".format(hash_val)), "w")
         f.writelines(syz_config)
         f.close()
+        # Log the full generated fuzzing config for debugging
+        fuzz_cfg_path = os.path.join(syzkaller_path, "workdir/{}.cfg".format(hash_val))
+        if os.path.exists(fuzz_cfg_path):
+            with open(fuzz_cfg_path, 'r') as cfg_f:
+                self.logger.info("[DEBUG] generated {}.cfg content:\n{}".format(hash_val, cfg_f.read()))
 
     def __extract_syscalls(self, testcase):
         res = []

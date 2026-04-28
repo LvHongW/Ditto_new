@@ -1,3 +1,22 @@
 {
-    "chat.restoreLastPanelSession": true
+    "claudeCode.environmentVariables": [
+        {
+            "name": "ANTHROPIC_BASE_URL",
+            "value": "http://222.20.126.10:33330"
+        },
+        {
+            "name": "ANTHROPIC_AUTH_TOKEN",
+            "value": "sk-505CUaRvvTbDWpaIlFLeYuoNneIAgVgTjdIxcGasauFjQWKD"
+        },
+        {
+            "name": "ANTHROPIC_MODEL",
+            "value": "glm51_claude"
+        },
+        {
+            "name": "ANTHROPIC_SMALL_FAST_MODEL",
+            "value": "glm51_claude"
+        }
+
+    ],
+    "claudeCode.disableLoginPrompt": true,
 }
